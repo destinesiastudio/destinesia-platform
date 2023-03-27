@@ -1,0 +1,19 @@
+{
+    "name": "Destinesia Studio",
+    "description": "Tools created by Destinesia Studio",
+    "version": "1.0",
+    "manifest_version": 3,
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "icons": {
+        "128": "assets/icons/logo128x128.png"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    }
+}
