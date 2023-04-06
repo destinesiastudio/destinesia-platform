@@ -1,0 +1,1073 @@
+{
+  "name": "Michael AI",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b1b3e39f-96b8-4ff1-83f3-5337495e567a",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "94f586b1-c5f5-4c4a-b0fd-f87299b72b2f",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        620
+      ],
+      "webhookId": "84e1eeb9-6ead-455b-b7a2-00eb475e1514"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.message }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=UTF-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "d1d07768-52a7-48b2-aa92-305395ba3487",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1580,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let message = $input.first().json.choices[0].message.content\n\nreturn { message }"
+      },
+      "id": "f8fa3040-4399-4879-abc8-235924be784a",
+      "name": "Cleaning",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $node.Webhook.json.body.deviceId }}",
+        "messageData": "={{ $node.Webhook.json.body.message }}"
+      },
+      "id": "5c8598f3-bfed-4c6c-8fd9-721530e32de4",
+      "name": "Cache Question",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        440,
+        400
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $node.Webhook.json.body.deviceId }}",
+        "messageData": "={{ $json.message }}"
+      },
+      "id": "e1077d32-899e-4149-a125-407a58801b2f",
+      "name": "Cache Answer",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1580,
+        400
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "message",
+        "key": "={{ $json.body.deviceId }}",
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "id": "1c2ee23b-4078-4924-9d84-af6d34c85616",
+      "name": "Get History",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        240,
+        620
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message }}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "id": "e1d16cdb-5d8d-485a-8010-638577b69af9",
+      "name": "IF Redis Empty",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        620,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $node[\"Get History\"].json.message.length }}",
+              "operation": "largerEqual",
+              "value2": 10
+            }
+          ]
+        }
+      },
+      "id": "7cebd638-800b-43dd-ae70-48f9d3a42f5c",
+      "name": "IF Redis Length",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        880,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $node.Webhook.json.body.deviceId }}"
+      },
+      "id": "4b91f4a4-2ee7-470d-9ab3-d1d5319ce000",
+      "name": "Clear",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        860
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.message }}",
+              "operation": "isNotEmpty"
+            }
+          ],
+          "number": [
+            {
+              "value1": "={{ $json.body.message.length }}",
+              "operation": "smallerEqual",
+              "value2": 100
+            }
+          ]
+        }
+      },
+      "id": "04120b13-ea34-4a71-ab05-4a8de9d844aa",
+      "name": "IF Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        40,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "requestMethod": "POST",
+        "url": "https://api.openai.com/v1/completions",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\"model\": \"text-davinci-003\", \"prompt\": \"I am a highly intelligent question answering bot, I know everything. I will give my best guess to all questions. Q:{{ $json.message }}\\n\", \"temperature\": 0, \"max_tokens\": 3000}",
+        "queryParametersJson": "="
+      },
+      "id": "ce206cf5-7031-43d8-a932-a815a06d0611",
+      "name": "GPT3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "requestMethod": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\"model\": \"gpt-4\", \"messages\": {{ $json.messages }}, \"temperature\": 0, \"max_tokens\": 3000}",
+        "queryParametersJson": "="
+      },
+      "id": "19aa84b9-73d9-4532-93db-b6f7e017f4de",
+      "name": "GPT4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        600
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let message = $input.first().json.choices[0].text\n\nif($input.first().json.choices[0].text && $input.first().json.choices[0].text.includes('A:'))\n{\n  message = $input.first().json.choices[0].text\n    .replace('A:', '')\n}\n\nmessage = message.replace('\\n', '')\n\nreturn { message }"
+      },
+      "id": "2a009628-6d78-42b6-afc0-ebf88505bd58",
+      "name": "Cleaning1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "messages",
+              "value": "={{ $node.Webhook.json.body.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "61024d5c-6ec2-445a-a5ad-670488b0e1be",
+      "name": "Question1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        860,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let messages = [\n  { role: 'system', 'content': 'You are a helpful assistant.' },\n  { role: 'user', 'content': $('Webhook').first().json.body.message },\n]\n\nreturn { messages: JSON.stringify(messages) }"
+      },
+      "id": "cfb5d4ea-a998-4af2-887c-3bce169d9d0c",
+      "name": "Question",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        880,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const history = $('Get History').first().json.message\n  .reverse()\n  .slice(0, 10)\n  .map((prev, i) => ({\n    role: i % 2 === 0 ? 'user' : 'assistant',\n    content: prev\n  }))\n\nlet messages = [\n  { role: 'system', 'content': 'You are a helpful assistant.' },\n  ...history,\n  { role: 'user', 'content': $('Webhook').first().json.body.message },\n]\n\nreturn { messages: JSON.stringify(messages) }"
+      },
+      "id": "57bd8b22-0c6f-4beb-8a95-cda4c4416ef7",
+      "name": "Add History",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        880,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let message = ''\n\n$('Get History').first().json.message.reverse().slice(0, 10).forEach((prev, i) => {\n  message += i % 2 === 0 ? `Q:${prev}\\\\n` : `A:${prev}\\\\n`\n})\n\nmessage = message.replace('Q:', '')\nmessage += 'Q:' + $('Webhook').first().json.body.message\n// $('Question').first().json.message = message\n\nreturn { message }"
+      },
+      "id": "f74763c4-9035-4dad-b154-fc4741c0e67d",
+      "name": "Add History1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "path": "michael-ai/history",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5f1163b7-1c43-4ca2-9d81-af58f54f7619",
+      "name": "GET History",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        960
+      ],
+      "webhookId": "84e1eeb9-6ead-455b-b7a2-00eb475e1514",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "40",
+          "name": "Michael AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "messages",
+        "key": "={{ $json.query.user }}",
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "id": "e3f7e0bd-db99-4afe-9361-3e0333a7fe74",
+      "name": "Dialog History",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        20,
+        960
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let auth = $input.item.json.headers.authorization\nauth = Buffer.from(auth.replace('Basic ', ''), 'base64').toString()\nauth = auth.split(':')[0]\n\nreturn { json: { auth } }"
+      },
+      "id": "94fe218b-b800-4f12-b9ca-365d2297349e",
+      "name": "Extract Auth Name",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        20,
+        1140
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3a9a2ef9-2ef6-4fa2-83f7-770bc2d4422d",
+      "name": "Respond to GET History",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        420,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $json.key }}",
+        "messageData": "={{ JSON.stringify($json.value) }}",
+        "tail": true
+      },
+      "id": "f3791a6f-7c1b-4847-a26e-ce90ba14661a",
+      "name": "Dialog Cache",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        420,
+        1140
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "basicAuth",
+        "httpMethod": "POST",
+        "path": "michael-ai/history",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a6f6de14-746f-4081-b07a-5afef2c878c2",
+      "name": "POST History",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1140
+      ],
+      "webhookId": "84e1eeb9-6ead-455b-b7a2-00eb475e1514",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "39",
+          "name": "Michael All Access"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {}
+      },
+      "id": "bc7d2503-b003-49ce-8329-0c690a9b2ac2",
+      "name": "Respond to POST History",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        660,
+        1140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $json.query.user }}"
+      },
+      "id": "10f86928-474b-47c3-ac7a-d500e2e2d0ad",
+      "name": "Clear Cache",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        20,
+        1340
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "httpMethod": "POST",
+        "path": "michael-ai/gpt",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "73bc1653-1bb4-4fc1-9dbd-5c85cf22b16e",
+      "name": "POST GPT",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1560
+      ],
+      "webhookId": "84e1eeb9-6ead-455b-b7a2-00eb475e1514",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "40",
+          "name": "Michael AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "requestMethod": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\"model\": \"gpt-4\", \"messages\": {{ JSON.stringify($json.messages) }}, \"temperature\": 0, \"max_tokens\": 3000}",
+        "queryParametersJson": "="
+      },
+      "id": "c90e9d57-2202-4fc3-8e0f-a0d2ad97499c",
+      "name": "GPT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        680,
+        1540
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const newItems = []\n\nfor (const item of $('POST History').all()[0].json.body) {\n  newItems.push({ json: { key: $input.all()[0].json.auth, value: item } })\n}\n\nreturn newItems"
+      },
+      "id": "c38ee221-71ab-4b38-b16d-bd2289ff0b75",
+      "name": "Convert to ForEach",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        220,
+        1140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const key = $('POST GPT').all()[0].json.query.user\n\nconst user = {\n  role: 'user',\n  content: $('POST GPT').all()[0].json.body.prompt\n}\n\nconst assistant = {\n  role: 'assistant',\n  content: $input.all()[0].json.choices[0].message.content\n}\n\nreturn [\n  { json: { key, value: user } },\n  { json: { key, value: assistant } }\n]"
+      },
+      "id": "c25966aa-3618-4a8a-a84f-77fa6264eb6d",
+      "name": "Convert to ForEach1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        920,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let messages = [\n  { role: 'system', 'content': 'You are a helpful assistant.' },\n  { role: 'user', 'content': $('POST GPT').item.json.body.prompt },\n]\n\nreturn { json: { messages } }"
+      },
+      "id": "c83f821a-8912-4c28-b147-8e8555f34f7c",
+      "name": "Question2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        460,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const history = $('Dialog History1').item.json.messages\n  .slice(0, 10)\n  .map(message => JSON.parse(message))\n\nlet messages = [\n  { role: 'system', 'content': 'You are a helpful assistant.' },\n  ...history,\n  { role: 'user', 'content': $('POST GPT').item.json.body.prompt },\n]\n\nreturn { json: { messages } }"
+      },
+      "id": "44b70cb3-dad1-4b10-9d9e-a731e4f1362e",
+      "name": "Add History2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        460,
+        1640
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "messages",
+        "key": "={{ $json.query.user }}",
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "id": "9fe13b9f-4466-4efe-9a0b-c3adcab99aab",
+      "name": "Dialog History1",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        20,
+        1560
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.messages }}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "id": "4de7627c-62be-4014-9398-2a4fc5d7958f",
+      "name": "IF Redis Empty1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        220,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $json.key }}",
+        "messageData": "={{ JSON.stringify($json.value) }}",
+        "tail": true
+      },
+      "id": "07293aca-b8f9-4d94-ab02-f308c0d49989",
+      "name": "Dialog Cache1",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        1540
+      ],
+      "credentials": {
+        "redis": {
+          "id": "6",
+          "name": "Kubernetes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $node.GPT.json.choices[0].message.content }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=UTF-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "e56e64c7-22c1-4199-a6fc-a170e95dd2d6",
+      "name": "Respond to POST GPT",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "httpMethod": "DELETE",
+        "path": "michael-ai/history",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e3890d1e-94cf-4e33-8de0-850d23d9103d",
+      "name": "DELETE History",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1340
+      ],
+      "webhookId": "84e1eeb9-6ead-455b-b7a2-00eb475e1514",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "40",
+          "name": "Michael AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {}
+      },
+      "id": "8cde9999-20b5-4e39-ae69-75f0c64ab379",
+      "name": "Respond to DELETE History",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        460,
+        1340
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cleaning": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cache Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get History": {
+      "main": [
+        [
+          {
+            "node": "IF Redis Empty",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cache Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Redis Empty": {
+      "main": [
+        [
+          {
+            "node": "Question",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Redis Length",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Redis Length": {
+      "main": [
+        [
+          {
+            "node": "Clear",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Valid": {
+      "main": [
+        [
+          {
+            "node": "Get History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT3": {
+      "main": [
+        [
+          {
+            "node": "Cleaning1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT4": {
+      "main": [
+        [
+          {
+            "node": "Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question1": {
+      "main": [
+        [
+          {
+            "node": "GPT3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question": {
+      "main": [
+        [
+          {
+            "node": "GPT4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add History": {
+      "main": [
+        [
+          {
+            "node": "GPT4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add History1": {
+      "main": [
+        [
+          {
+            "node": "GPT3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET History": {
+      "main": [
+        [
+          {
+            "node": "Dialog History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dialog History": {
+      "main": [
+        [
+          {
+            "node": "Respond to GET History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST History": {
+      "main": [
+        [
+          {
+            "node": "Extract Auth Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dialog Cache": {
+      "main": [
+        [
+          {
+            "node": "Respond to POST History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Auth Name": {
+      "main": [
+        [
+          {
+            "node": "Convert to ForEach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Cache": {
+      "main": [
+        [
+          {
+            "node": "Respond to DELETE History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST GPT": {
+      "main": [
+        [
+          {
+            "node": "Dialog History1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT": {
+      "main": [
+        [
+          {
+            "node": "Convert to ForEach1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to ForEach": {
+      "main": [
+        [
+          {
+            "node": "Dialog Cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dialog History1": {
+      "main": [
+        [
+          {
+            "node": "IF Redis Empty1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to ForEach1": {
+      "main": [
+        [
+          {
+            "node": "Dialog Cache1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Redis Empty1": {
+      "main": [
+        [
+          {
+            "node": "Question2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add History2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question2": {
+      "main": [
+        [
+          {
+            "node": "GPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add History2": {
+      "main": [
+        [
+          {
+            "node": "GPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dialog Cache1": {
+      "main": [
+        [
+          {
+            "node": "Respond to POST GPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DELETE History": {
+      "main": [
+        [
+          {
+            "node": "Clear Cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "823dfbd0-58ce-412f-b2b6-c684adcfff05",
+  "id": "8",
+  "meta": {
+    "instanceId": "eda19f9a7f153a81e21a21c9bfad5891b92ef532c7e46cf8bf904de0b2fd192f"
+  },
+  "tags": []
+}

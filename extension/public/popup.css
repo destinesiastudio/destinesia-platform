@@ -1,9 +1,22 @@
 body {
     display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    height: 500px;
-    width: 500px;
+    align-items: flex-start;
+    width: 30rem;
+    height: 35rem;
     margin: 0;
+    padding: 12px;
     overflow: hidden;
+}
+
+.menu-btn {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.menu-icon {
+    margin-bottom: 8px;
 }

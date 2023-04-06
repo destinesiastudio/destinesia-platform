@@ -1,8 +1,15 @@
-let active = false
+chrome.storage.local.get('location', (items) => {
+    if (typeof items.location !== 'undefined') {
+        chrome.action.setPopup({popup: `./${items.location}`})
+    }
+})
 
-const makeOrange = (colour: string) => {
-    document.body.style.backgroundColor = colour
-}
+// let active = false
+
+
+// const makeOrange = (colour: string) => {
+//     document.body.style.backgroundColor = colour
+// }
 
 // chrome.action.onClicked.addListener(tab => {
 //     active = !active
