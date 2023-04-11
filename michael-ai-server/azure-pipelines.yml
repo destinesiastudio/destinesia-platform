@@ -12,8 +12,6 @@ variables:
 - name: registry
   value: registry.cn-hongkong.aliyuncs.com
 - name: repo
-  value: destinesiastudio/destinesia-platform
-- name: registry-repo
   value: destinesiastudio/michael-ai-server
 - name: tag
   value: latest
@@ -60,7 +58,7 @@ stages:
       inputs:
         script: |
           docker load --input $(Pipeline.Workspace)/dockerimage.tar
-          docker tag $(registry)/$(registry-repo):$(Build.BuildId) $(registry)/$(repo):$(tag)
+          docker tag $(registry)/$(repo):$(Build.BuildId) $(registry)/$(repo):$(tag)
     - task: Docker@2
       inputs:
         containerRegistry: '$(registry)'
