@@ -1,0 +1,70 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - michael-ai-server/*
+pr: none
+
+variables:
+- name: registry
+  value: registry.cn-hongkong.aliyuncs.com
+- name: repo
+  value: destinesiastudio/destinesia-platform
+- name: tag
+  value: latest
+
+stages:
+- stage: Build
+  jobs:
+  - job:
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Docker@2
+      displayName: Docker Image to Artifact
+      inputs:
+        command: 'build'
+        Dockerfile: '$(System.DefaultWorkingDirectory)/michael-ai-server/Dockerfile'
+        addPipelineData: false
+        buildContext: '$(System.DefaultWorkingDirectory)/michael-ai-server'
+        arguments: '-t $(registry)/$(repo):$(Build.BuildId)'
+    - script: |
+        docker image save $(registry)/$(repo):$(Build.BuildId) -o $(Pipeline.Workspace)/dockerimage.tar
+      continueOnError: false
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Pipeline.Workspace)/dockerimage.tar'
+        artifact: 'docker-image'
+        publishLocation: 'pipeline'
+
+- stage: Push
+  jobs:
+  - job:
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: Artifact to Docker Image
+      inputs:
+        buildType: 'current'
+        artifactName: 'docker-image'
+        targetPath: '$(Pipeline.Workspace)'
+    - script: |
+        docker load --input $(Pipeline.Workspace)/dockerimage.tar
+        docker tag $(registry)/$(repo):$(Build.BuildId) $(registry)/$(repo):$(tag)
+      continueOnError: false
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(registry)'
+        repository: $(repo)
+        command: 'push'
+        addPipelineData: false
+        tags: |
+          $(Build.BuildId)
+          $(tag)
