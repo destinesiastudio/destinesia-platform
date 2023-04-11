@@ -60,7 +60,7 @@ stages:
       inputs:
         script: |
           docker load --input $(Pipeline.Workspace)/dockerimage.tar
-          docker tag $(registry)/$(repo):$(Build.BuildId) $(registry)/$(registry-repo):$(tag)
+          docker tag $(registry)/$(registry-repo):$(Build.BuildId) $(registry)/$(repo):$(tag)
     - task: Docker@2
       inputs:
         containerRegistry: '$(registry)'
