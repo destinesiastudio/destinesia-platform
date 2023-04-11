@@ -4,20 +4,29 @@ import { DialogContext } from './dialog-provider'
 import { ResponseLoading } from './response-loading'
 
 export const ChatWindow = () => {
-    const { list, loading } = useContext(DialogContext)
+    const { list, loading, response } = useContext(DialogContext)
 
     return (
         <DialogList>
-            {loading ?
+
+            {loading && response === '' ?
                 <DialogListLoading>
                     <ResponseLoading />
                 </DialogListLoading>
             : null}
+
+            {response !== '' ?
+                <DialogListLoading>
+                    { response }
+                </DialogListLoading>
+            : null}
+
             {list.slice().reverse().map(({ role, content }, i) => 
                 <DialogListItem key={i} role={role}>
                     { content }
                 </DialogListItem>
             )}
+
         </DialogList>
     )
 }

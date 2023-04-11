@@ -1,41 +1,38 @@
 import React, { createContext, useEffect, useState } from 'react'
+import { useStream } from '@hooks/useStream'
 
 export const DialogContext = createContext()
 
 export const DialogProvider = props => {
     const auth = `Bearer ${process.env.TOKEN}`
     const user = process.env.USER
+    const { response, generateResponse, clearResponse, interrupt } = useStream(
+        `${process.env.BASE_URL}/gpt?user=${process.env.USER}`,
+        `${process.env.BASE_URL}/interrupt?user=${process.env.USER}`
+    )
     const [loading, setLoading] = useState(false)
     const [dialog, setDialog] = useState([])
 
     const update = content => {
-        setDialog(p => [...p, { role: 'user', content }])
+        if(response !== '') {
+            setDialog(p => [...p, { role: 'assistant', content: ` ${response}`.slice(1) }, { role: 'user', content }])
+        } else {
+            setDialog(p => [...p, { role: 'user', content }])
+        }
+        clearResponse()        
         getAnswer(content)
     }
 
     const clear = () => {
         delHistory(dialog)
         setDialog([])
+        clearResponse()
     }
 
     const getAnswer = async prompt => {
         setLoading(true)
-
-        const res = await fetch(
-            process.env.BASE_URL + `/gpt?user=${user}`, 
-            {
-                headers: {
-                    'Authorization': auth,
-                    'Content-Type': 'application/json; charset=utf-8'
-                },
-                method: 'POST',
-                body: JSON.stringify({ prompt })
-            }
-        )
-        const content = await res.text()
-
+        await generateResponse(prompt)
         setLoading(false)
-        setDialog(p => [...p, { role: 'assistant', content }])
     }
 
     const getHistory = async () => {
@@ -67,6 +64,11 @@ export const DialogProvider = props => {
         setLoading(false)
     }
 
+    const interruptGpt = async () => {
+        await interrupt()
+        setLoading(false)
+    }
+
     useEffect(() => {
         getHistory()
     }, [])
@@ -75,11 +77,14 @@ export const DialogProvider = props => {
         <DialogContext.Provider
             value={{
                 list: dialog,
+                response,
                 loading,
                 update,
-                clear
+                clear,
+                interrupt: interruptGpt
             }}
         >
+            {/* <Stream /> */}
             {props.children}
         </DialogContext.Provider>
     )

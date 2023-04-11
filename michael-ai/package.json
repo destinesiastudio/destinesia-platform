@@ -5,7 +5,8 @@
   "main": "webpack.config.js",
   "scripts": {
     "start": "webpack-dev-server --port 4200",
-    "build": "webpack --env production"
+    "build": "webpack --env production",
+    "watch": "webpack --watch"
   },
   "author": "mayzyo",
   "license": "Apache-2.0",

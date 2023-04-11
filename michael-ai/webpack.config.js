@@ -12,7 +12,10 @@ module.exports = env => {
         devtool: env && env.production ? undefined : 'inline-source-map',
         devServer: {
             static: {
-                directory: path.join(__dirname, 'dist'),
+                directory: path.join(__dirname, '..', 'extension', 'public', 'michael-ai'),
+            },
+            proxy: {
+                '/api': 'http://127.0.0.1:8080',
             },
             hot: true,
         },
@@ -62,7 +65,7 @@ module.exports = env => {
         },
         output: {
             filename: '[name].[fullhash].js',
-            path: path.resolve(__dirname, 'dist'),
+            path: path.join(__dirname, '..', 'extension', 'public', 'michael-ai'),
         },
         optimization: {
             runtimeChunk: 'single',

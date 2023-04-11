@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 
 export const ChatInput = () => {
     const { t } = useTranslation()
-    const { list, loading, update, clear } = useContext(DialogContext)
+    const { list, loading, update, clear, interrupt, response } = useContext(DialogContext)
     const [text, setText] = useState('')
 
     const submit = () => {
@@ -32,11 +32,8 @@ export const ChatInput = () => {
                 }}
                 onChange={e => setText(e.target.value)}
             />
-            <BorderedButton
-                disabled={loading}
-                onClick={() => submit()}
-            >
-                { t('Send') }
+            <BorderedButton onClick={() => loading && response !== '' ? interrupt() : submit()}>
+                { loading && response !== '' ? t('Stop') : t('Send') }
             </BorderedButton>
             <ClearButton disabled={loading || list.length === 0} onClick={() => clear()}>
                 <img height='24px' width='24px' src={recycleIcon} />
