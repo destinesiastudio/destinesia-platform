@@ -32,10 +32,16 @@ export const ChatInput = () => {
                 }}
                 onChange={e => setText(e.target.value)}
             />
-            <BorderedButton onClick={() => loading && response !== '' ? interrupt() : submit()}>
+            <BorderedButton
+                disabled={loading && response === ''}
+                onClick={() => loading && response !== '' ? interrupt() : submit()}
+            >
                 { loading && response !== '' ? t('Stop') : t('Send') }
             </BorderedButton>
-            <ClearButton disabled={loading || list.length === 0} onClick={() => clear()}>
+            <ClearButton
+                disabled={loading || list.length === 0}
+                onClick={() => clear()}
+            >
                 <img height='24px' width='24px' src={recycleIcon} />
             </ClearButton>
         </View>

@@ -4,6 +4,17 @@ chrome.storage.local.get('location', (items) => {
     }
 })
 
+chrome.tabs.onActivated.addListener((activeInfo) => {
+    console.log(activeInfo.tabId);
+
+    (async () => {
+        const [tab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
+        const response = await chrome.tabs.sendMessage(activeInfo.tabId, {greeting: "hello"});
+        // do something with response here, not outside the function
+        console.log(response)
+    })()
+})
+
 // let active = false
 
 

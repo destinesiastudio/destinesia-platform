@@ -4,7 +4,7 @@ import { chatHistory, updateChatHistory } from "./history"
 export 
 
 const addHistory = async (user, prompt) => {
-    const configuration = { role: 'system', content: 'You are a helpful assistant.' }
+    const configuration = { role: 'system', content: 'You are a helpful assistant. Your answers will use markdown when possible.' }
 
     const history = await chatHistory(user)
 

@@ -8,7 +8,10 @@ const Dotenv = require('dotenv-webpack')
 module.exports = env => {
     return {
         mode: env && env.production ? 'production' : 'development',
-        entry: ['babel-polyfill', './src/index.ts'],
+        entry: {
+            index: ['babel-polyfill', './src/index.ts'],
+            'content-script': path.resolve(__dirname, 'src', 'injected', 'index.ts'),
+        },
         devtool: env && env.production ? undefined : 'inline-source-map',
         devServer: {
             static: {
@@ -52,6 +55,10 @@ module.exports = env => {
                     test: /\.(woff|woff2|eot|ttf|otf)$/,
                     use: 'file-loader'
                 },
+                {
+                    test: /\.css$/i,
+                    use: ['style-loader', 'css-loader']
+                },
             ],
         },
         resolve: {
@@ -64,25 +71,14 @@ module.exports = env => {
             },
         },
         output: {
-            filename: '[name].[fullhash].js',
+            filename: '[name].js',
             path: path.join(__dirname, '..', 'extension', 'public', 'michael-ai'),
-        },
-        optimization: {
-            runtimeChunk: 'single',
-            splitChunks: {
-                cacheGroups: {
-                    vendor: {
-                        test: /[\\/]node_modules[\\/]/,
-                        name: 'vendors',
-                        chunks: 'all',
-                    }
-                }
-            }
         },
         plugins: [
             new CleanWebpackPlugin(),
             new HtmlWebpackPlugin({
-                title: 'ChatGPT'
+                title: 'Michael AI',
+                chunks : ['index'],
             }),
             new ForkTsCheckerWebpackPlugin(),
             env && env.production ? false : new ReactRefreshWebpackPlugin(),

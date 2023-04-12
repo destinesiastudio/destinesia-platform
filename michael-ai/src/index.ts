@@ -1,12 +1,13 @@
 import { createRoot } from 'react-dom/client'
-import i18n from "i18next";
+import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
+import hljs from 'highlight.js'
+import { marked } from 'marked'
 import App from './app'
 
+// Initialise internationalisation
 import en from './assets/en.json'
 import zh from './assets/zh.json'
-
-// Initialise internationalisation
 i18n.use(initReactI18next)
     .init({
         resources: { en, zh },
@@ -15,6 +16,23 @@ i18n.use(initReactI18next)
             escapeValue: false
         }
     })
+
+// Initialise marked & highlight.js
+import 'highlight.js/styles/base16/material.css'
+hljs.highlightAll()
+marked.setOptions({
+    renderer: new marked.Renderer(),
+    highlight: function(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext'
+      return hljs.highlight(code, { language }).value
+    },
+    langPrefix: 'hljs language-', // highlight.js css expects a top-level 'hljs' class.
+    pedantic: false,
+    gfm: true,
+    breaks: true,
+    smartypants: true,
+    xhtml: false
+})
 
 // React DOM container setup
 let container = document.createElement('div')
