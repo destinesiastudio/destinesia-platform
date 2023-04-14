@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { DialogContext } from './dialog-provider'
 import { BorderedButton } from './bordered-button'
@@ -11,9 +11,38 @@ export const ChatInput = () => {
     const { list, loading, update, clear, interrupt, response } = useContext(DialogContext)
     const [text, setText] = useState('')
 
+    useEffect(() => {
+        chrome.runtime.onMessage.addListener(
+            function({ msg, data }, sender, sendResponse) {
+                if (msg === 'sendToAi') {
+                    setText(data.selectionText)
+                }
+            }
+        )
+    }, [])
+
     const submit = () => {
-        update(text)
+        if(text !== 'trigger') {
+            update(text)
+
+        } else {
+            trigger()
+        }
+
         setText('')
+    }
+
+    const trigger = async () => {
+        try {
+            const [tab] = await chrome.tabs.query({active: true, currentWindow: true})
+            try {
+                chrome.tabs.sendMessage(tab.id, { activeTabId: tab.id })
+            } catch {
+                console.log('Tab does not have content script injected')
+            }
+        } catch {
+            console.log('Tab querying failed')
+        }
     }
 
     return (

@@ -10,7 +10,8 @@ module.exports = env => {
         mode: env && env.production ? 'production' : 'development',
         entry: {
             index: ['babel-polyfill', './src/index.ts'],
-            'content-script': path.resolve(__dirname, 'src', 'injected', 'index.ts'),
+            'service_worker': path.resolve(__dirname, 'src', 'service_worker', 'index.ts'),
+            'content-script': path.resolve(__dirname, 'src', 'content-script', 'index.ts'),
         },
         devtool: env && env.production ? undefined : 'inline-source-map',
         devServer: {

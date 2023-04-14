@@ -27,7 +27,7 @@ export const ChatWindow = () => {
                 <DialogListItem
                     key={i}
                     role={role}
-                    dangerouslySetInnerHTML={{__html: marked.parse(content)}}
+                    dangerouslySetInnerHTML={{__html: marked.parse(content || '')}}
                 />
             )}
 

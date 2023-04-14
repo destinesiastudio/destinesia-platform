@@ -1,77 +1,40 @@
 import React, { createContext, useEffect, useState } from 'react'
-import { useStream } from '@hooks/useStream'
+import { useGpt } from '@hooks/useGpt'
+import { useDialogHistory } from '@hooks/useDialogHistory'
 
 export const DialogContext = createContext()
 
 export const DialogProvider = props => {
-    const auth = `Bearer ${process.env.TOKEN}`
-    const user = process.env.USER
-    const { response, generateResponse, clearResponse, interrupt } = useStream(
-        `${process.env.BASE_URL}/gpt?user=${process.env.USER}`,
-        `${process.env.BASE_URL}/interrupt?user=${process.env.USER}`
-    )
+    const { dialog, addDialog, clear: clearHistory } = useDialogHistory()
+    const { response, generateResponse, clearResponse, interrupt: interruptGpt, isComplete } = useGpt()
     const [loading, setLoading] = useState(false)
-    const [dialog, setDialog] = useState([])
 
-    const update = content => {
+    useEffect(() => setLoading(!isComplete), [isComplete])
+
+    const update = async content => {
         if(response !== '') {
-            setDialog(p => [...p, { role: 'assistant', content: ` ${response}`.slice(1) }, { role: 'user', content }])
+            addDialog([{ role: 'assistant', content: ` ${response}`.slice(1) }, { role: 'user', content }])
         } else {
-            setDialog(p => [...p, { role: 'user', content }])
+            addDialog([{ role: 'user', content }])
         }
-        clearResponse()        
-        getAnswer(content)
+
+        clearResponse()
+        
+        setLoading(true)
+        await generateResponse(content)
     }
 
     const clear = () => {
-        delHistory(dialog)
-        setDialog([])
+        setLoading(true)
+        clearHistory()
+        setLoading(false)
         clearResponse()
     }
 
-    const getAnswer = async prompt => {
-        setLoading(true)
-        await generateResponse(prompt)
+    const interrupt = async () => {
+        await interruptGpt()
         setLoading(false)
     }
-
-    const getHistory = async () => {
-        const res = await fetch(
-            process.env.BASE_URL + `/history?user=${user}`,
-            { headers: { 'Authorization': auth } }
-        )
-        const { messages } = await res.json()
-
-        messages && setDialog(messages.map(el => JSON.parse(el)))
-    }
-
-    const delHistory = async current => {
-        setLoading(true)
-
-        try {
-            const res = await fetch(
-                process.env.BASE_URL + `/history?user=${user}`,
-                { headers: { 'Authorization': auth }, method: 'DELETE' }
-            )
-
-            if(res.status !== 200) {
-                setDialog(current)
-            }
-        } catch {
-            setDialog(current)
-        }
-
-        setLoading(false)
-    }
-
-    const interruptGpt = async () => {
-        await interrupt()
-        setLoading(false)
-    }
-
-    useEffect(() => {
-        getHistory()
-    }, [])
 
     return (
         <DialogContext.Provider
@@ -81,10 +44,9 @@ export const DialogProvider = props => {
                 loading,
                 update,
                 clear,
-                interrupt: interruptGpt
+                interrupt
             }}
         >
-            {/* <Stream /> */}
             {props.children}
         </DialogContext.Provider>
     )
