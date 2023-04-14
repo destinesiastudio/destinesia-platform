@@ -30,7 +30,9 @@
     "web_accessible_resources": [{
         "matches": ["<all_urls>"],
         "resources": [
-            "michael-ai/content-script.js"
+            "michael-ai/content-script.js",
+            "michael-ai/index.html",
+            "michael-ai/index.js"
         ]
     }]
 }

@@ -35,14 +35,21 @@ export const ChatInput = () => {
     const trigger = async () => {
         try {
             const [tab] = await chrome.tabs.query({active: true, currentWindow: true})
-            try {
-                chrome.tabs.sendMessage(tab.id, { activeTabId: tab.id })
-            } catch {
-                console.log('Tab does not have content script injected')
-            }
+            await chrome.runtime.sendMessage({ task: 'toggleFloat', data: tab.id })
         } catch {
             console.log('Tab querying failed')
         }
+        
+        // try {
+        //     const [tab] = await chrome.tabs.query({active: true, currentWindow: true})
+        //     try {
+        //         chrome.tabs.sendMessage(tab.id, { task: 'floatWindow' })
+        //     } catch {
+        //         console.log('Tab does not have content script injected')
+        //     }
+        // } catch {
+        //     console.log('Tab querying failed')
+        // }
     }
 
     return (

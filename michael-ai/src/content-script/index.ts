@@ -1,17 +1,13 @@
-console.debug('[Michael AI] injected successfully...')
-  
-chrome.runtime.onMessage.addListener(
-  (request, sender, sendResponse) => {
-    console.debug('[Michael AI] received a message...')
+import { toggle, close } from './float-window'
 
-    if(request.selectionText) {
-      console.log(`Active tab: ${document.title}`)
-      console.log('selectionText', request.selectionText)
+console.debug('[Michael AI] injected successfully...')
+
+chrome.runtime.onMessage.addListener(
+  ({ task }, sender, sendResponse) => {
+    if(task === 'floatWindow') {
+      toggle()
+    } else if(task === 'closeWindow') {
+      close()
     }
-    // console.log(sender.tab ?
-    //             "from a content script:" + sender.tab.url :
-    //             "from the extension");
-    // if (request.greeting === "hello")
-    //   sendResponse({farewell: "goodbye"});
   }
 )

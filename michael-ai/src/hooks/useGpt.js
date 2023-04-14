@@ -5,6 +5,8 @@ export const useGpt = () => {
     const [isComplete, setIsComplete] = useState(true)
 
     useEffect(() => {
+        getResponse()
+
         chrome.runtime.onMessage.addListener(({ task, data }) => {
             if(task === 'updateResponse') {
                 setIsComplete(false)
@@ -14,6 +16,11 @@ export const useGpt = () => {
             }
         })
     }, [])
+
+    const getResponse = async () => {
+        const message = await chrome.runtime.sendMessage({ task: 'response' })
+        setResponse(message)
+    }
 
     const generateResponse = async (prompt) => {
         setIsComplete(false)

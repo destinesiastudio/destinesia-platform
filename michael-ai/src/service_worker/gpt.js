@@ -55,8 +55,6 @@ export const generateResponse = async prompt => {
     try {
         await chrome.runtime.sendMessage({ task: 'completeResponse' })
     } catch {}
-    
-    addAssistantDialog(_response)
 }
 
 export const interrupt = async () => {
