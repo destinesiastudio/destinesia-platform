@@ -1,6 +1,6 @@
 // console.log(window.location.href)
-const openApp = (appId: number) => () => {
-    const appName = 'michael-ai/index.html'
+const openApp = (appId: string) => () => {
+    const appName = `${appId}/index.html`
     console.log(`Open App ${appName}`)
     // window.location.href = ''
     chrome.storage.local.set({ "location": appName }, () => {
@@ -10,4 +10,5 @@ const openApp = (appId: number) => () => {
 }
 
 const menuBtns = document.getElementsByClassName('menu-btn')
-menuBtns[0].addEventListener("click", openApp(0))
+menuBtns[0].addEventListener("click", openApp('michael-ai'))
+menuBtns[1].addEventListener("click", openApp('control-tower'))
