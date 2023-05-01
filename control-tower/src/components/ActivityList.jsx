@@ -6,12 +6,12 @@ export const ActivityList = () => {
 
     useEffect(() => {
         initialiseActivities()
-        chrome.runtime.onMessage.addListener(handleControlsChange)
-        return () => chrome.runtime.onMessage.removeListener(handleControlsChange)
+        chrome.runtime.onMessage.addListener(handleActivitiesChange)
+        return () => chrome.runtime.onMessage.removeListener(handleActivitiesChange)
     }, [])
 
     const initialiseActivities = async () => {
-        const controls = await chrome.runtime.sendMessage({ task: 'getControls' })
+        const controls = await chrome.runtime.sendMessage({ task: 'getActivities' })
         const tabs = await chrome.tabs.query({})
 
         const tabLookup = tabs.reduce((lookup, tab) => ({ ...lookup, [tab.id]: tab }))
@@ -20,16 +20,17 @@ export const ActivityList = () => {
         setActivities(([ ...refresh ]))
     }
 
-    const handleControlsChange = async ({ task, data }, sender) => {
-        if(task === 'controlsChange') {
-            console.log('controlsChange', data)
-            const tabs = await chrome.tabs.query({})
-
-            const tabLookup = tabs.reduce((lookup, tab) => ({ ...lookup, [tab.id]: tab }))
-            const refresh = data.refresh.map(id => `Refresh - ${tabLookup[id].title}`)
-
-            setActivities(([ ...refresh ]))
+    const handleActivitiesChange = async ({ task, data }, sender) => {
+        if(task !== 'activitiesChange') {
+            return
         }
+        
+        const tabs = await chrome.tabs.query({})
+
+        const tabLookup = tabs.reduce((lookup, tab) => ({ ...lookup, [tab.id]: tab }))
+        const refresh = data.refresh.map(id => `Refresh - ${tabLookup[id].title}`)
+
+        setActivities(([ ...refresh ]))
     }
 
     return activities.length !== 0 ? (

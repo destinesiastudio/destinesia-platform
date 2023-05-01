@@ -1,9 +1,10 @@
 import React from 'react'
+import { BorderedButton } from './BorderedButton'
 
 export const RemoveControl = ({ type, onRemove }) => {
     return (
-        <button onClick={() => onRemove(type)}>
-            Remove Refresh
-        </button>
+        <BorderedButton onClick={() => onRemove(type)}>
+            Remove Activity
+        </BorderedButton>
     )
 }

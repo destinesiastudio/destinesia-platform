@@ -1,23 +1,34 @@
 import { delRefresh, getRefresh, setRefresh } from './refresh'
 
-chrome.runtime.onMessage.addListener(async ({ task, data }, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (a, sender, sendResponse) => {
+    console.log('service', a)
+    const { task, data } = a
+    if(!a) {
+        return
+    }
     switch(task) {
-        case 'getControls':
-            sendResponse(getControls())
+        case 'getActivities':
+            sendResponse(getActivities())
             break
         case 'setRefresh':
             setRefresh(data.tabId, data.frequency)
-            await chrome.runtime.sendMessage({ task: 'controlsChange', data: getControls() })
+            await chrome.runtime.sendMessage({ task: 'activitiesChange', data: getActivities() })
             break
         case 'delRefresh':
             delRefresh(data.tabId)
-            await chrome.runtime.sendMessage({ task: 'controlsChange', data: getControls() })
+            await chrome.runtime.sendMessage({ task: 'activitiesChange', data: getActivities() })
             break
         default:
-            throw new Error('No such task name exists...')
+            throw new Error('No such task exists...')
     }
 })
 
-const getControls = () => ({
+chrome.tabs.onRemoved.addListener((tabId, removed) => {
+    console.log(`[Control Tower] - Tab ${tabId} closed by user`)
+    delRefresh(tabId)
+    chrome.runtime.sendMessage({ task: 'activitiesChange', data: getActivities() })
+})
+
+const getActivities = () => ({
     refresh: getRefresh()
 })

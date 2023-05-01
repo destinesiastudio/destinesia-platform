@@ -27,5 +27,8 @@ container.style.height = '100vh'
 container.style.display = 'flex'
 container.style.flexDirection = 'column'
 
+container.style.color = 'white'
+container.style.background = 'rgb(47, 48, 49)'
+
 const root = createRoot(container)
 root.render(App())

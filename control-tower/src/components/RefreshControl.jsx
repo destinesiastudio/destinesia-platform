@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
+import { BorderedButton } from './BorderedButton'
 
 export const RefreshControl = ({ onActivate }) => {
     const [rate, setRate] = useState(60)
@@ -21,16 +22,16 @@ export const RefreshControl = ({ onActivate }) => {
             <SliderView>
                 <RangeSlider
                     type='range'
-                    min='5'
+                    min='10'
                     max='120'
                     step='5'
                     onChange={e => setRate(e.target.value)}
                 />
                 <SliderText>{ rate } seconds</SliderText>
             </SliderView>
-            <SetButton onClick={() => addRefresh()}>
-                Set Refresh Rate
-            </SetButton>
+            <BorderedButton onClick={() => addRefresh()}>
+                Auto Refresh
+            </BorderedButton>
         </View>
     )
 }
@@ -53,7 +54,4 @@ const SliderText = styled.span`
 `
 
 const RangeSlider = styled.input`
-`
-
-const SetButton = styled.button`
 `

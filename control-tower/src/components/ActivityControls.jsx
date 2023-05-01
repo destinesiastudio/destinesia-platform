@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { RefreshControl } from './RefreshControl'
 import { RemoveControl } from './RemoveControl'
 
-export const ControlList = () => {
+export const ActivityControls = () => {
     const [controls, setControls] = useState({})
 
     useEffect(() => {
@@ -13,7 +13,7 @@ export const ControlList = () => {
     const initialiseControls = async () => {
         try {
             const [tab] = await chrome.tabs.query({active: true, currentWindow: true})
-            const controls = await chrome.runtime.sendMessage({ task: 'getControls' })
+            const controls = await chrome.runtime.sendMessage({ task: 'getActivities' })
             setControls({
                 refresh: controls.refresh.findIndex(id => tab.id === id) !== -1
             })

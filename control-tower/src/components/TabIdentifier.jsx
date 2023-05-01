@@ -5,18 +5,26 @@ export const TabIdentifier = () => {
     const [title, setTitle] = useState('')
     
     useEffect(() => {
-        getTabTitle()
-        chrome.runtime.onMessage.addListener(getTabTitle)
-        return () => chrome.runtime.onMessage.removeListener(getTabTitle)
+        buildTitle()
+        chrome.runtime.onMessage.addListener(handleActivitiesChange)
+        return () => chrome.runtime.onMessage.removeListener(handleActivitiesChange)
     }, [])
 
-    const getTabTitle = async () => {
+    const buildTitle = async () => {
         try {
             const [tab] = await chrome.tabs.query({active: true, currentWindow: true})
             setTitle(tab.title)
         } catch {
             console.log('Tab querying failed')
         }
+    }
+
+    const handleActivitiesChange = async ({ task, data }, sender) => {
+        if(task !== 'activitiesChange') {
+            return
+        }
+
+        await buildTitle()
     }
 
     return (
